@@ -26,42 +26,6 @@ const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
                 <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'" />
                 <link rel="icon" href="/icons/favicon.ico" />
             </Head>
-
-            <Script
-                src="/lemon.js"
-                strategy="lazyOnload"
-                onLoad={() => {
-                    // @ts-ignore
-                    window.createLemonSqueezy();
-                }}
-            />
-
-            <Container
-                sx={{
-                    display: "flex",
-                    alignItems: "stretch",
-                    flexDirection: "column",
-                    minWidth: "500px",
-                    minHeight: props.minHeight,
-                }}
-            >
-                <Flex
-                    as="main"
-                    sx={{
-                        flex: 1,
-                        justifyContent: "center",
-                        alignContent: "center",
-                    }}
-                >
-                    <Box
-                        sx={{
-                            textAlign: "center",
-                        }}
-                    >
-                        {props.children}
-                    </Box>
-                </Flex>
-            </Container>
         </>
     );
 };
