@@ -1,8 +1,11 @@
 const { withPlausibleProxy } = require("next-plausible");
 
 /** @type {import('next').NextConfig} */
-const nextConfig = withPlausibleProxy({
+module.exports = withPlausibleProxy()({
     reactStrictMode: true,
+    images: {
+        unoptimized: true
+    },
 
     async headers() {
         return [
@@ -25,5 +28,3 @@ const nextConfig = withPlausibleProxy({
         ];
     },
 });
-
-module.exports = nextConfig;

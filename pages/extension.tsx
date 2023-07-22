@@ -100,6 +100,7 @@ export default function Extension() {
 
     useEffect(() => {
         summarizeArticle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

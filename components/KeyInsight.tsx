@@ -17,9 +17,11 @@ export async function findKeyInsight(vars: { url: string }) {
     });
 
     if (!res.ok) {
+        console.log('Failed to find key insight')
         throw new Error("Failed to find key insight");
     }
 
+    //return 'Hello world silly robots'
     return res.text();
 }
 
