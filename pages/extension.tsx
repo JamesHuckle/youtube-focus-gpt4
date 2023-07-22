@@ -23,7 +23,7 @@ const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
                     name="description"
                     content="Get the main insight from any article using GPT"
                 />
-
+                <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'" />
                 <link rel="icon" href="/icons/favicon.ico" />
             </Head>
 
@@ -61,11 +61,6 @@ const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
                         {props.children}
                     </Box>
                 </Flex>
-
-                <Box as="footer" sx={{ textAlign: "center", p: [1, 3] }}>
-                    Created for fun by{" "}
-                    <Link href="https://swizec.com">Swizec</Link>
-                </Box>
             </Container>
         </>
     );
@@ -79,20 +74,23 @@ export default function Extension() {
         mutateAsync,
     } = useMutation(findKeyInsight);
 
-    async function summarizeArticle() {
-        let [tab] = await chrome.tabs.query({
-            active: true,
-            lastFocusedWindow: true,
-        });
+    console.log(">>> extension keyInsight", keyInsight, isLoading);
 
-        // const tab = {
-        //     url: "https://www.garmin.com/en-US/blog/marine/ghost-boat-with-garmin-gps-leads-father-son-duo-to-man-overboard/",
-        // };
+    async function summarizeArticle() {
+        // let [tab] = await chrome.tabs.query({
+        //     active: true,
+        //     lastFocusedWindow: true,
+        // });
+
+        const tab = {
+            url: "https://www.youtube.com/watch?v=7d16CpWp-ok&ab_channel=TalkIslam",
+        };
 
         if (tab.url) {
             try {
                 await mutateAsync({ url: tab.url });
             } catch (e) {
+                console.log('>>> extension error failed request');
                 console.error(e);
             }
         }
@@ -126,18 +124,6 @@ export default function Extension() {
                     {keyInsight}
                 </Paragraph>
             ) : null}
-
-            <Button
-                as="a"
-                // @ts-expect-error
-                href="https://scholarstream.lemonsqueezy.com/checkout/buy/c47d6d06-4103-450b-a3f1-de24e8a3339d?embed=1&discount=0&media=0"
-                target="_blank"
-                className="lemonsqueezy-button"
-                sx={{ my: 2 }}
-                onClick={() => setMinHeight(600)}
-            >
-                Support WhatIsPoint.xyz
-            </Button>
         </Layout>
     );
 }
