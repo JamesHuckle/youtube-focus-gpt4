@@ -96,7 +96,7 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
             temperature: 0.1,
             max_tokens: 10,
         });
-        const openai_allowed_video = openai_request.data.choices[0].message.content;
+        const openai_allowed_video = openai_request?.data?.choices?.[0]?.message?.content;;
         console.log('>>> open ai allowed video?', openai_allowed_video);
         if (openai_allowed_video === 'YES') {
             res.status(200).send(true)
