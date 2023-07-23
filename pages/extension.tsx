@@ -109,7 +109,9 @@ export default function Extension() {
 
     useEffect(() => {
         console.log('>>> extension load from chrome.storage.local');
-    
+        chrome.storage.local.get(null, function(storage) {
+            console.log('extension local storage', storage);
+        });
         // If chrome.storage.local has values then use them
         chrome.storage.local.get(['allowedVideos', 'blockedVideos', 'redirectUrl'], function(result) {
             let initialAllowed = result.allowedVideos ? result.allowedVideos : ALLOWED_VIDEOS;
@@ -117,7 +119,7 @@ export default function Extension() {
             let initialRedirectUrl = result.redirectUrl ? result.redirectUrl : 'https://www.codecademy.com/';
     
             console.log('>>> extension init vars initialAllowed', initialAllowed, 'initialBlocked', initialBlocked);
-    
+
             // Store the values back to chrome.storage.local
             chrome.storage.local.set({
                 allowedVideos: initialAllowed,
@@ -130,23 +132,35 @@ export default function Extension() {
             setAllowedVideos(initialAllowed);
             setBlockedVideos(initialBlocked);
             setRedirectUrl(initialRedirectUrl);
-            console.log('>>> extension vars loaded allowed vids and blocked vids', allowedVideos, blockedVideos);
         });
+    }, []);
+
+
+    useEffect(() => {
+        console.log('>>> extension vars loaded allowed vids and blocked vids', allowedVideos, '<<', blockedVideos, '<<', redirectUrl);
     }, [allowedVideos, blockedVideos, redirectUrl]);
 
 
     const handleAllowedChange = (event: any) => {
-        localStorage.setItem('allowedVideos', event.target.value);
+        // Saving the new value to local storage
+        chrome.storage.local.set({ 'allowedVideos': event.target.value }, () => {
+            console.log('Allowed videos saved in local storage');
+        });
         setAllowedVideos(event.target.value);
     };
     
     const handleBlockedChange = (event: any) => {
-        localStorage.setItem('blockedVideos', event.target.value);
+        // Saving the new value to local storage
+        chrome.storage.local.set({ 'blockedVideos': event.target.value }, () => {
+            console.log('Allowed videos saved in local storage');
+        });
         setBlockedVideos(event.target.value);
     };
 
     const handlesetRedirectUrlChange = (event: any) => {
-        localStorage.setItem('redirectUrl', event.target.value);
+        chrome.storage.local.set({ 'redirectUrl': event.target.value }, () => {
+            console.log('Allowed videos saved in local storage');
+        });
         setRedirectUrl(event.target.value);
     };
 
@@ -155,11 +169,67 @@ export default function Extension() {
         setAllowedVideos(ALLOWED_VIDEOS);
         setBlockedVideos(BLOCKED_VIDEOS);
         setRedirectUrl('https://www.codecademy.com/');
-        // Also re-set these values in localStorage
-        localStorage.setItem('allowedVideos', ALLOWED_VIDEOS);
-        localStorage.setItem('blockedVideos', BLOCKED_VIDEOS);
-        localStorage.setItem('redirectUrl', 'https://www.codecademy.com/');
+        // Also re-set these values in chrome.storage.local
+        chrome.storage.local.set({
+            allowedVideos: ALLOWED_VIDEOS,
+            blockedVideos: BLOCKED_VIDEOS,
+            redirectUrl: 'https://www.codecademy.com/'
+        }, function() {
+            console.log('>>> extension vars were RESET and saved to chrome.storage.local');
+        });
     };
+
+    async function summarizeArticle(RawUrl: string) {
+        console.log('>>> extension tab url', RawUrl);
+
+        if (RawUrl && allowedVideos && blockedVideos) {
+            const url = RawUrl;
+            let videoId;
+            if(url.includes("shorts/")){
+                videoId = url.split("shorts/")[1];
+            } else {
+                videoId = new URL(url).searchParams.get("v");
+            }
+            if (videoId) {
+                setIsLoading(true);
+                try {
+                    console.log('>>> extension sending request: allowedVideos', allowedVideos, 'blockedVideos', blockedVideos, 'url', url);
+                    const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight',
+                    { 
+                        url: url,
+                        allowedVideos: allowedVideos, 
+                        blockedVideos: blockedVideos, 
+                    });
+                    if (data === true) {
+                        setKeyInsight('allow');
+                    } else {
+                        setKeyInsight('block');
+                        chrome.tabs.update({url: redirectUrl})
+                    }
+                    console.log(">>> output from post", data);
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                console.log('>>> extension no video id');
+                setIsLoading(false);
+            }
+        }
+    }
+
+    const executeScript = (tabs:any) => {
+        const tab = tabs[0];
+        summarizeArticle(tab.url);
+    }
+
+    const handleTabUpdate = (tabId:any, changeInfo:any, tab:any) => {
+        // We're only interested in URL changes, not other kinds of updates
+        if (changeInfo.url && tab.active) {
+            summarizeArticle(changeInfo.url);
+        }
+    }
 
     useEffect(() => {
         // When the extension first loads, check the active tab
@@ -172,59 +242,12 @@ export default function Extension() {
         return () => {
             chrome.tabs.onUpdated.removeListener(handleTabUpdate);
             }
-    }, []);
-
-    const executeScript = (tabs:any) => {
-        const tab = tabs[0];
-        summarizeArticle();
-    }
-
-    const handleTabUpdate = (tabId:any, changeInfo:any, tab:any) => {
-        // We're only interested in URL changes, not other kinds of updates
-        if (changeInfo.url && tab.active) {
-            summarizeArticle();
-        }
-    }
-
-
-    async function summarizeArticle() {
-        setIsLoading(true);
-
-        let [tab] = await chrome.tabs.query({
-            active: true,
-            lastFocusedWindow: true,
-        });
-
-        console.log('>>> extension tab url', tab, tab?.url);
-        if (tab?.url) {
-            try {
-                console.log('>>> extension sending request', tab?.url);
-                console.log('>>> allowedVideos', allowedVideos, 'blockedVideos', blockedVideos);
-                const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight',
-                 { 
-                    url: tab.url,
-                    allowedVideos: allowedVideos, 
-                    blockedVideos: blockedVideos, 
-                });
-                if (data === true) {
-                    setKeyInsight('allow');
-                } else {
-                    setKeyInsight('block');
-                    chrome.tabs.update({url: redirectUrl})
-                }
-                console.log(">>> output from post", data, 'keyInsight', keyInsight);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    }
-
-    useEffect(() => {
-        summarizeArticle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [allowedVideos, blockedVideos, redirectUrl]);
+
+    // useEffect(() => {
+    //     summarizeArticle();
+    // // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, []);
 
     return (
         <Layout minHeight={minHeight}>
