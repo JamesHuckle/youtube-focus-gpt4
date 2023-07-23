@@ -68,9 +68,11 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
         let videoDataStr = "Title:\n" + title + "\nDescription:\n" + description + "\nTags:\n" + tags;
         //console.log('>>> video data str', videoDataStr);
         // GPT-3 to determine whether video fits allowed description
+        const prompt = `Video Description:${videoDataStr} \n\n${allowedVideos} \n\n${blockedVideos} \n\nBased on the Video description is this video allowed? Ouput 'YES' or 'NO', if unsure then 'NO'`;
+        console.log('>>> prompt', prompt);
         const openai_request = await openai.createChatCompletion({
             model: "gpt-4",
-            messages: [{role: "user", content: `Video Description:${videoDataStr} \n\n${allowedVideos} \n\n${blockedVideos} \n\nBased on the Video description is this video allowed? Ouput 'YES' or 'NO', if unsure then 'NO'`}],
+            messages: [{role: "user", content: prompt}],
             temperature: 0.1,
             max_tokens: 10,
         });
