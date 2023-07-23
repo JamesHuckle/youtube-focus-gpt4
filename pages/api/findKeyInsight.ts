@@ -1,3 +1,4 @@
+//findKeyInsight.ts
 import { Configuration, OpenAIApi } from "openai";
 import { extract } from "@extractus/article-extractor";
 import { stripHtml } from "string-strip-html";
@@ -5,34 +6,6 @@ import { NextApiHandler } from "next";
 import { Redis } from "@upstash/redis";
 import { URL } from "url";
 import fetch from 'isomorphic-unfetch';
-
-const ALLOWED_VIDEOS = `
-Allowed Video Topics:
-- Artifical Intelligence (AI) and Machine Learning (ML)
-- Programming and Software Development
-- Business and Entrepreneurship
-- Career and Productivity
-- Communication and Relationships
-- Finance and Economics
-- Investing and Trading
-- Crypto and Blockchain
-- Health and Fitness
-- Psychology and Philosophy
-- Science and Technology
-- Music and Focus
-- Motivation and Inspiration
-- Health and Fitness
-`
-
-const BLOCKED_VIDEOS = `
-Blocked Video Topics:
-- Politics and Current Events
-- UFC and MMA
-- Fighting and Violence
-- Gaming and Esports
-- Entertainment
-- Funny Compilation Videos
-`
 
 const openai = new OpenAIApi(
     new Configuration({
@@ -69,7 +42,7 @@ async function getYouTubeVideoData(videoId: string): Promise<any> {
 
 
 const findKeyInsight: NextApiHandler = async (req, res) => {
-    const { url } = req.body;
+    const {url, allowedVideos, blockedVideos } = req.body;
     const cleanUrl = getCleanUrl(url);
     console.log('>>> url', cleanUrl);
 
@@ -97,7 +70,7 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
         // GPT-3 to determine whether video fits allowed description
         const openai_request = await openai.createChatCompletion({
             model: "gpt-4",
-            messages: [{role: "user", content: `Video Description:${videoDataStr} \n\n${ALLOWED_VIDEOS} \n\n${BLOCKED_VIDEOS} \n\nBased on the Video description is this video allowed? Ouput 'YES' or 'NO', if unsure then 'NO'`}],
+            messages: [{role: "user", content: `Video Description:${videoDataStr} \n\n${allowedVideos} \n\n${blockedVideos} \n\nBased on the Video description is this video allowed? Ouput 'YES' or 'NO', if unsure then 'NO'`}],
             temperature: 0.1,
             max_tokens: 10,
         });

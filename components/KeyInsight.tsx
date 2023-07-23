@@ -3,7 +3,7 @@ import { useMutation } from "react-query";
 import { Box, Button, Flex, Input, Link, Paragraph, Spinner } from "theme-ui";
 import { usePlausible } from "next-plausible";
 
-export async function findKeyInsight(vars: { url: string }) {
+export async function findKeyInsight(vars: { url: string, allowedVideos: string, blockedVideos: string}) {
     const res = await fetch("/api/findKeyInsight", {
         method: "POST",
         headers: {
@@ -25,19 +25,10 @@ export async function findKeyInsight(vars: { url: string }) {
     return res.text();
 }
 
-const HowItWorks = () => {
-    return (
-        <>
-            <h3>Here&apos;s how it works:</h3>
-            <video autoPlay loop muted style={{ maxHeight: "400px" }}>
-                <source src="preview.mp4" type="video/mp4" />
-            </video>
-        </>
-    );
-};
-
 export const KeyInsight = () => {
     const [url, setUrl] = useState<string>("");
+    const [allowedVideos, setAllowedVideos] = useState<string>("");
+    const [blockedVideos, setBlockedVideos] = useState<string>("");
     const [isError, setIsError] = useState<boolean>(false);
 
     const plausible = usePlausible();
@@ -55,7 +46,7 @@ export const KeyInsight = () => {
 
         if (url) {
             try {
-                await mutateAsync({ url });
+                await mutateAsync({ url, allowedVideos, blockedVideos });
             } catch (e) {
                 console.error(e);
                 setIsError(true);

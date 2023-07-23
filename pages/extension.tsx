@@ -1,7 +1,7 @@
+//extension.js
 import Head from "next/head";
 import Script from "next/script";
 import { PropsWithChildren, useEffect, useState } from "react";
-import { useMutation } from "react-query";
 import axios from 'axios';
 import {
     Box,
@@ -13,7 +13,36 @@ import {
     Paragraph,
     Spinner,
 } from "theme-ui";
-import { findKeyInsight } from "../components/KeyInsight";
+
+
+const ALLOWED_VIDEOS = `
+Allowed Video Topics:
+- Artifical Intelligence (AI) and Machine Learning (ML)
+- Programming and Software Development
+- Business and Entrepreneurship
+- Career and Productivity
+- Communication and Relationships
+- Finance and Economics
+- Investing and Trading
+- Crypto and Blockchain
+- Health and Fitness
+- Psychology and Philosophy
+- Science and Technology
+- Music and Focus
+- Motivation and Inspiration
+- Health and Fitness
+`
+
+const BLOCKED_VIDEOS = `
+Blocked Video Topics:
+- Politics and Current Events
+- UFC and MMA
+- Fighting and Violence
+- Gaming and Esports
+- Entertainment
+- Funny Compilation Videos
+`
+
 
 const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
     return (
@@ -69,9 +98,28 @@ const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
 
 export default function Extension() {
     const [minHeight, setMinHeight] = useState<number | undefined>();
-
     const [keyInsight, setKeyInsight] = useState("");//
     const [isLoading, setIsLoading] = useState(false);//
+
+    // If localStorage has values then use them
+    const savedAllowedVideos = localStorage.getItem('allowedVideos');
+    const savedBlockedVideos = localStorage.getItem('blockedVideos');
+    // If localStorage does not have the values, use the initial contents
+    const initialAllowed = savedAllowedVideos ? savedAllowedVideos : ALLOWED_VIDEOS;
+    const initialBlocked = savedBlockedVideos ? savedBlockedVideos : BLOCKED_VIDEOS;
+    const [allowedVideos, setAllowedVideos] = useState(initialAllowed);
+    const [blockedVideos, setBlockedVideos] = useState(initialBlocked);
+
+    const handleAllowedChange = (event: any) => {
+    localStorage.setItem('allowedVideos', event.target.value);
+    setAllowedVideos(event.target.value);
+    };
+
+    const handleBlockedChange = (event: any) => {
+    localStorage.setItem('blockedVideos', event.target.value);
+    setBlockedVideos(event.target.value);
+    };
+
 
     useEffect(() => {
         // When the extension first loads, check the active tab
@@ -101,10 +149,6 @@ export default function Extension() {
     async function summarizeArticle() {
         setIsLoading(true);
 
-        // const tab = {
-        //     url: "https://www.youtube.com/watch?v=7d16CpWp-ok&ab_channel=TalkIslam",
-        // };
-
         let [tab] = await chrome.tabs.query({
             active: true,
             lastFocusedWindow: true,
@@ -113,7 +157,12 @@ export default function Extension() {
         if (tab.url) {
             try {
                 console.log('>>> extension sending request');
-                const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight', { url: tab.url });
+                const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight',
+                 { 
+                    url: tab.url ,
+                    allowedVideos: allowedVideos, 
+                    blockedVideos: blockedVideos, 
+                });
                 if (data === true) {
                     setKeyInsight('allow');
                 } else {
@@ -136,15 +185,22 @@ export default function Extension() {
 
     return (
         <Layout minHeight={minHeight}>
-            <Heading>What is the point?</Heading>
-            <Paragraph>
-                Reading? Ain&apos;t nobody got time for that. Here&apos;s the
-                point 👇
-            </Paragraph>
+            <Heading>Wasting time?</Heading>
+            <form>
+                <label>
+                    Allowed Videos:
+                    <input type='text' value={allowedVideos} onChange={handleAllowedChange} />
+                </label>
+                <br/>
+                <label>
+                    Blocked Videos:
+                    <input type='text' value={blockedVideos} onChange={handleBlockedChange} />
+                </label>
+            </form>
 
-            <Heading as="h2" sx={{ mt: 3 }}>
-                The point 👇
-            </Heading>
+            <Paragraph>
+                Ain&apos;t nobody got time for that.👇
+            </Paragraph>
 
             {isLoading ? (
                 <Box>
