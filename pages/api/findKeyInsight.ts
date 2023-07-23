@@ -78,7 +78,12 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
         return res.status(200).send(cached);
     }
 
-    const videoId = new URL(url).searchParams.get("v");
+    let videoId;
+    if(url.includes("shorts/")){
+        videoId = url.split("shorts/")[1];
+    } else {
+        videoId = new URL(url).searchParams.get("v");
+    }
     let videoDataStr = "";
     if (videoId) {
         const videoData = await getYouTubeVideoData(videoId);

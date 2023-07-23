@@ -2,6 +2,7 @@ import Head from "next/head";
 import Script from "next/script";
 import { PropsWithChildren, useEffect, useState } from "react";
 import { useMutation } from "react-query";
+import axios from 'axios';
 import {
     Box,
     Button,
@@ -26,36 +27,104 @@ const Layout = (props: PropsWithChildren<{ minHeight?: number }>) => {
                 <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'" />
                 <link rel="icon" href="/icons/favicon.ico" />
             </Head>
+
+            <Script
+                src="/lemon.js"
+                strategy="lazyOnload"
+                onLoad={() => {
+                    // @ts-ignore
+                    window.createLemonSqueezy();
+                }}
+            />
+
+            <Container
+                sx={{
+                    display: "flex",
+                    alignItems: "stretch",
+                    flexDirection: "column",
+                    minWidth: "500px",
+                    minHeight: props.minHeight,
+                }}
+            >
+                <Flex
+                    as="main"
+                    sx={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignContent: "center",
+                    }}
+                >
+                    <Box
+                        sx={{
+                            textAlign: "center",
+                        }}
+                    >
+                        {props.children}
+                    </Box>
+                </Flex>
+            </Container>
         </>
     );
 };
 
 export default function Extension() {
     const [minHeight, setMinHeight] = useState<number | undefined>();
-    const {
-        data: keyInsight,
-        isLoading,
-        mutateAsync,
-    } = useMutation(findKeyInsight);
 
-    console.log(">>> extension keyInsight", keyInsight, isLoading);
+    const [keyInsight, setKeyInsight] = useState("");//
+    const [isLoading, setIsLoading] = useState(false);//
+
+    useEffect(() => {
+        // When the extension first loads, check the active tab
+        chrome.tabs.query({active: true, currentWindow: true}, executeScript);
+
+        // Add a listener for tab updates
+        chrome.tabs.onUpdated.addListener(handleTabUpdate);
+        
+        // Return cleanup function
+        return () => {
+            chrome.tabs.onUpdated.removeListener(handleTabUpdate);
+            }
+    }, []);
+
+    const executeScript = (tabs:any) => {
+        const tab = tabs[0];
+        summarizeArticle();
+    }
+
+    const handleTabUpdate = (tabId:any, changeInfo:any, tab:any) => {
+        // We're only interested in URL changes, not other kinds of updates
+        if (changeInfo.url && tab.active) {
+            summarizeArticle();
+        }
+    }
 
     async function summarizeArticle() {
-        // let [tab] = await chrome.tabs.query({
-        //     active: true,
-        //     lastFocusedWindow: true,
-        // });
+        setIsLoading(true);
 
-        const tab = {
-            url: "https://www.youtube.com/watch?v=7d16CpWp-ok&ab_channel=TalkIslam",
-        };
+        // const tab = {
+        //     url: "https://www.youtube.com/watch?v=7d16CpWp-ok&ab_channel=TalkIslam",
+        // };
+
+        let [tab] = await chrome.tabs.query({
+            active: true,
+            lastFocusedWindow: true,
+        });
 
         if (tab.url) {
             try {
-                await mutateAsync({ url: tab.url });
-            } catch (e) {
-                console.log('>>> extension error failed request');
-                console.error(e);
+                console.log('>>> extension sending request');
+                const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight', { url: tab.url });
+                if (data === true) {
+                    setKeyInsight('allow');
+                } else {
+                    setKeyInsight('block');
+                    chrome.tabs.update({url: 'https://www.codecademy.com/'})
+                }
+                console.log(">>> output from post", data, 'keyInsight', keyInsight);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
             }
         }
     }
