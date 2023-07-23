@@ -86,12 +86,6 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
     } else {
         return res.status(400).send("Couldn't extract video data");
     }
-
-    // const finalResult = insight1.data.choices[0].text;
-
-    // await redis.set(cleanUrl, finalResult);
-
-    // res.status(200).send(finalResult);
 };
 
 export default findKeyInsight;

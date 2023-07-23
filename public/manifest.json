@@ -15,6 +15,7 @@
         "activeTab",
         "tabs",
         "webNavigation",
+        "storage",
         "http://*/*",
         "https://*/*"
     ],
