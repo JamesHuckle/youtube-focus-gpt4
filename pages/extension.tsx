@@ -182,7 +182,7 @@ export default function Extension() {
             lastFocusedWindow: true,
         });
 
-        if (tab.url) {
+        if (tab?.url) {
             try {
                 console.log('>>> extension sending request');
                 const { data } = await axios.post('https://youtube-focus-gpt4.vercel.app/api/findKeyInsight',

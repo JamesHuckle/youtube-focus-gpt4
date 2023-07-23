@@ -21,7 +21,6 @@ export async function findKeyInsight(vars: { url: string, allowedVideos: string,
         throw new Error("Failed to find key insight");
     }
 
-    //return 'Hello world silly robots'
     return res.text();
 }
 
