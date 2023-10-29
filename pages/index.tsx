@@ -34,7 +34,7 @@ const BrowserExtension = () => {
                 <a href="https://chrome.google.com/webstore/detail/whatispointxyz/ocochaianpngffjfchhcbjmfjgdaligc">
                     WhatIsPoint.xyz
                 </a>{" "}
-                is a browser extension that leverages the power of GPT-3 to
+                is a browser extension that leverages the power of GPT-4 to
                 simplify the information overload of online articles. With a
                 single click, it summarizes the key insights of any article
                 you&apos;re reading, providing a convenient and

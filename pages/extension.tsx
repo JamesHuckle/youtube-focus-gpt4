@@ -254,7 +254,7 @@ export default function Extension() {
             <Heading>Wasting time?</Heading>
             {/* Reset Button */}
             <div style={{ marginTop: '10px' }}>
-                <Button onClick={handleReset}>Reset to Defaults</Button>
+                <Button onClick={handleReset} style={{backgroundColor: 'navy', margin: "10px!"}}>Reset to Defaults</Button>
             </div>
             <form onSubmit={(event) => event.preventDefault()}>
                 <div style={{ marginBottom: '10px' }}>
