@@ -3,7 +3,6 @@ import { Configuration, OpenAIApi } from "openai";
 import { extract } from "@extractus/article-extractor";
 import { stripHtml } from "string-strip-html";
 import { NextApiHandler } from "next";
-import { Redis } from "@upstash/redis";
 import { URL } from "url";
 import fetch from 'isomorphic-unfetch';
 
@@ -12,12 +11,6 @@ const openai = new OpenAIApi(
         apiKey: process.env.OPENAI_API_KEY,
     })
 );
-
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
 
 // remove utm params, the most likely for us to be useless
 function getCleanUrl(url: string): string {
@@ -45,11 +38,6 @@ const findKeyInsight: NextApiHandler = async (req, res) => {
     const {url, allowedVideos, blockedVideos } = req.body;
     const cleanUrl = getCleanUrl(url);
     console.log('>>> url', cleanUrl);
-
-    const cached = await redis.get(cleanUrl);
-    if (cached) {
-        return res.status(200).send(cached);
-    }
 
     let videoId;
     if(url.includes("shorts/")){
