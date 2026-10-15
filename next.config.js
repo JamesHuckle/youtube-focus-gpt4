@@ -3,6 +3,7 @@ const { withPlausibleProxy } = require("next-plausible");
 /** @type {import('next').NextConfig} */
 module.exports = withPlausibleProxy()({
     reactStrictMode: true,
+    ...(process.env.BUILD_EXTENSION === "1" ? { output: "export" } : {}),
     images: {
         unoptimized: true
     },
